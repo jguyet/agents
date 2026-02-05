@@ -87,13 +87,34 @@ Notes:
 
 ## Strict Output
 
-Return **only** valid JSON (no markdown, no prose, no trailing commas).
+Return **ONLY** a JSON value as the entire assistant response.
+
+Hard requirements:
+
+- Output must be **raw JSON only** (no preface like "Here is the output", no explanations).
+- Do **NOT** wrap the JSON in code fences (no fenced code blocks like three backticks + `json`).
+- Do **NOT** add any other text before or after the JSON.
+- Top-level JSON must be a **JSON array** of action objects.
 
 Allowed top-level outputs:
 
-- Normal case (enough info to proceed): `[ { "action": "execute", ... } ]`
-- Need user clarification: `[ { "action": "ask-to-user", ... } ]`
-- Proceed but still ask a question (non-blocking ambiguity): `[ { "action": "execute", ... }, { "action": "ask-to-user", ... } ]`
+- Normal case (enough info to proceed): `[{ "action": "execute", ... }]`
+- Need user clarification: `[{ "action": "ask-to-user", ... }]`
+- Proceed but still ask a question (non-blocking ambiguity): `[{ "action": "execute", ... }, { "action": "ask-to-user", ... }]`
+
+Examples:
+
+RIGHT (raw JSON only):
+`[{"action":"execute","blockId":0,"executionOrder":["lead-developer","developer"]}]`
+
+WRONG (has extra text):
+`All files are updated. [{"action":"execute","blockId":0,"executionOrder":["lead-developer","developer"]}]`
+
+WRONG (code fences):
+
+```json
+[{"action":"execute","blockId":0,"executionOrder":["lead-developer","developer"]}]
+```
 
 Validation rules:
 
