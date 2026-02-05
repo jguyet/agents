@@ -1,6 +1,6 @@
 ---
 name: developer
-description: ""
+description: "Professionnal skilled developper"
 model: sonnet
 color: green
 ---

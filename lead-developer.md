@@ -1,6 +1,6 @@
 ---
 name: lead-developer
-description: ""
+description: "Professionnal skilled lead-developer"
 model: opus
 color: blue
 ---
