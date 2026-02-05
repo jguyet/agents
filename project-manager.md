@@ -56,34 +56,31 @@ Input is a JSON object with:
 
 ## Output format
 
-Return JSON array:
+Return **ONLY** raw JSON as the entire assistant response (no markdown, no prose, no code fences).
 
 ```json
-[
-    { "action": "execute", "blockId": <blockId>, "executionOrder": ["lead-developer", "developer"] },
-    { "action": "ask-to-user", "message": "Any needs to build the project or something else necessities" }
-]
+{ "for": "user|lead-developer|developer|...", "blockId": 0, "response": "<string>" }
 ```
 
-## Output Description
+Rules:
 
-Return a JSON array of action objects. Supported actions:
+- `for` must be `"lead-developer"` or `"developer"` or any agent you want to contact first for advance on the completion of the blockId.
+- If needed you can include a clear summary + recommended decision as <reponse>.
+- Otherwise, set `for: "developer"` when directly answering the developer.
 
-- `{"action":"execute","blockId":<blockId>,"executionOrder":[...]}`
-  - **action**: must be `"execute"`.
-  - **blockId**: the planned block id (same value as input `blockId`).
-  - **executionOrder**: array of agent names (strings) selected from `available-agents`.
-    - Order matters: decision-makers first (typically `lead-developer`), then implementers (typically `developer`).
-    - Keep it minimal (token efficiency). Only include agents required to reach the block DoD.
+Examples:
 
-- `{"action":"ask-to-user","message":"..."}`
-  - **action**: must be `"ask-to-user"`.
-  - **message**: a single concise question that resolves the biggest ambiguity / missing input needed to proceed.
+RIGHT (raw JSON only):
+`{"for":"lead-developer","blockId":0,"response":"Review the job of the developer on the block 0."}`
 
-Notes:
+WRONG (has extra text):
+`Wow. {"for":"lead-developer","blockId":0,"response":"very nice job"}`
 
-- You may return **only** `execute`, **only** `ask-to-user`, or both.
-- If returning both, put `execute` first, then `ask-to-user`.
+WRONG (code fences):
+
+```json
+{"for":"lead-developer","blockId":0,"response":"Hey. See block/0.md."}
+```
 
 ## Strict Output
 
@@ -94,44 +91,9 @@ Hard requirements:
 - Output must be **raw JSON only** (no preface like "Here is the output", no explanations).
 - Do **NOT** wrap the JSON in code fences (no fenced code blocks like three backticks + `json`).
 - Do **NOT** add any other text before or after the JSON.
-- Top-level JSON must be a **JSON array** of action objects.
-
-Allowed top-level outputs:
-
-- Normal case (enough info to proceed): `[{ "action": "execute", ... }]`
-- Need user clarification: `[{ "action": "ask-to-user", ... }]`
-- Proceed but still ask a question (non-blocking ambiguity): `[{ "action": "execute", ... }, { "action": "ask-to-user", ... }]`
-
-Examples:
-
-RIGHT (raw JSON only):
-`[{"action":"execute","blockId":0,"executionOrder":["lead-developer","developer"]}]`
-
-WRONG (has extra text):
-`All files are updated. [{"action":"execute","blockId":0,"executionOrder":["lead-developer","developer"]}]`
-
-WRONG (code fences):
-
-```json
-[{"action":"execute","blockId":0,"executionOrder":["lead-developer","developer"]}]
-```
-
-Validation rules:
-
-- `action` must be exactly `"execute"` or `"ask-to-user"`.
-- For `"execute"`:
-  - `blockId` must be present.
-  - `executionOrder` must be a non-empty array of strings.
-  - Each entry must be an agent name coming from `available-agents`.
-- For `"ask-to-user"`:
-  - `message` must be present and non-empty.
-
-Behavior rules:
-
-- If `blockId == 0`, always plan initialization work (OBJECTIVE.md, TEAM.md, and `block/0.md`) unless it already exists and clearly matches `context`.
-- If required files cannot be inferred/created due to missing `projectFolder` or missing critical context, return only `ask-to-user`.
 
 ## Block sizing rule
 
 - Prefer 1-3 concrete deliverables max.
+- Favorise small advancement per block.
 - If ambiguity > 1 major unknown, create a block dedicated to clarifying it.
